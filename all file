@@ -1,42 +1,30 @@
-function imgn=clip(imagen)
-
-if ~islogical(imagen)
-    imagen=im2bw(imagen,0.99);
-end
-a=~imagen;
-[f c]=find(a);
-lmaxc=max(c);lminc=min(c);
-lmaxf=max(f);lminf=min(f);
-imgn=a(lminf:lmaxf,lminc:lmaxc);%Clip image
-
-
 --------------------------------------------------------
 %CREATE TEMPLATES
 %Letter
-A=imread('A.bmp');B=imread('B.bmp');
-C=imread('C.bmp');D=imread('D.bmp');
-E=imread('E.bmp');F=imread('F.bmp');
-G=imread('G.bmp');H=imread('H.bmp');
-I=imread('I.bmp');J=imread('J.bmp');
-K=imread('K.bmp');L=imread('L.bmp');
-M=imread('M.bmp');N=imread('N.bmp');
-O=imread('O.bmp');P=imread('P.bmp');
-Q=imread('Q.bmp');R=imread('R.bmp');
-S=imread('S.bmp');T=imread('T.bmp');
-U=imread('U.bmp');V=imread('V.bmp');
-W=imread('W.bmp');X=imread('X.bmp');
-Y=imread('Y.bmp');Z=imread('Z.bmp');
+A=imread('letters_numbers\A.bmp');B=imread('letters_numbers\B.bmp');
+C=imread('letters_numbers\C.bmp');D=imread('letters_numbers\D.bmp');
+E=imread('letters_numbers\E.bmp');F=imread('letters_numbers\F.bmp');
+G=imread('letters_numbers\G.bmp');H=imread('letters_numbers\H.bmp');
+I=imread('letters_numbers\I.bmp');J=imread('letters_numbers\J.bmp');
+K=imread('letters_numbers\K.bmp');L=imread('letters_numbers\L.bmp');
+M=imread('letters_numbers\M.bmp');N=imread('letters_numbers\N.bmp');
+O=imread('letters_numbers\O.bmp');P=imread('letters_numbers\P.bmp');
+Q=imread('letters_numbers\Q.bmp');R=imread('letters_numbers\R.bmp');
+S=imread('letters_numbers\S.bmp');T=imread('letters_numbers\T.bmp');
+U=imread('letters_numbers\U.bmp');V=imread('letters_numbers\V.bmp');
+W=imread('letters_numbers\W.bmp');X=imread('letters_numbers\X.bmp');
+Y=imread('letters_numbers\Y.bmp');Z=imread('letters_numbers\Z.bmp');
 %Number
-one=imread('1.bmp');  two=imread('2.bmp');
-three=imread('3.bmp');four=imread('4.bmp');
-five=imread('5.bmp'); six=imread('6.bmp');
-seven=imread('7.bmp');eight=imread('8.bmp');
-nine=imread('9.bmp'); zero=imread('0.bmp');
+one=imread('letters_numbers\1.bmp');  two=imread('letters_numbers\2.bmp');
+three=imread('letters_numbers\3.bmp');four=imread('letters_numbers\4.bmp');
+five=imread('letters_numbers\5.bmp'); six=imread('letters_numbers\6.bmp');
+seven=imread('letters_numbers\7.bmp');eight=imread('letters_numbers\8.bmp');
+nine=imread('letters_numbers\9.bmp'); zero=imread('letters_numbers\0.bmp');
 %*-*-*-*-*-*-*-*-*-*-*-
 letter=[A B C D E F G H I J K L M...
-        N O P Q R S T U V W X Y Z];
+    N O P Q R S T U V W X Y Z];
 number=[one two three four five...
-        six seven eight nine zero];
+    six seven eight nine zero];
 character=[letter number];
 templates=mat2cell(character,42,[24 24 24 24 24 24 24 ...
     24 24 24 24 24 24 24 ...
@@ -44,29 +32,38 @@ templates=mat2cell(character,42,[24 24 24 24 24 24 24 ...
     24 24 24 24 24 24 24 ...
     24 24 24 24 24 24 24 24]);
 save ('templates','templates')
+clear all
+
 
 
 -------------------------------
-function [fl re]=lines(aa)
-aa=clip(aa);
-r=size(aa,1);
-for s=1:r
-    if sum(aa(s,:))==0
-        nm=aa(1:s-1,1:end);
-        rm=aa(s:end,1:end);
-        fl=~clip(~nm);
-        re=~clip(~rm);
+function [fl re]=lines(im_texto)
+
+im_texto=clip(im_texto);
+num_filas=size(im_texto,1);
+for s=1:num_filas
+    if sum(im_texto(s,:))==0
+        nm=im_texto(1:s-1, :);
+        rm=im_texto(s:end, :);
+        fl = clip(nm);
+        re=clip(rm);
+
         break
     else
-        fl=~aa;
-        re=[];
+        fl=im_texto;
+        re=[ ];
     end
 end
+
+function img_out=clip(img_in)
+[f c]=find(img_in);
+img_out=img_in(min(f):max(f),min(c):max(c));
 -------------------------------
-function letter=read_letter(imagn)
-comp=[];
-load templates
-for n=1:36
+function letter=read_letter(imagn,num_letras)
+
+global templates
+comp=[ ];
+for n=1:num_letras
     sem=corr2(templates{1,n},imagn);
     comp=[comp sem];
 end
@@ -147,62 +144,68 @@ else
     letter='0';
 end
 
+
 -------------------------------------
 function img_r=same_dim(imagen_g)
 [a b]=size(imagen_g);
 img_r=imagen_g(1:a/42:end,1:b/24:end);
 --------------------------------------
 
-warning off
+warning off %#ok<WNOFF>
+
 clc, close all, clear all
-imagen=imread('heavy_metal.bmp');
 
-imshow(imagen);title('INPUT IMAGE WITH NOISE')
+imagen=imread('amjad.bmp');
 
-if length(size(imagen))==3 
+imshow(imagen);
+title('INPUT IMAGE WITH NOISE')
+
+if size(imagen,3)==3 %RGB image
     imagen=rgb2gray(imagen);
 end
-imagen = medfilt2(imagen);
-[f c]=size(imagen);
-imagen (1,1)=255;
-imagen (f,1)=255;
-imagen (1,c)=255;
-imagen (f,c)=255;
-word=[];
+
+threshold = graythresh(imagen);
+imagen =~im2bw(imagen,threshold);
+
+imagen = bwareaopen(imagen,30);
+
+word=[ ];
 re=imagen;
-fid = fopen('d:\text.txt', 'w+');
+
+fid = fopen('text.txt', 'wt');
+
+load templates
+global templates
+
+num_letras=size(templates,2);
 while 1
+    
     [fl re]=lines(re);
-    imgn=~fl;
-    L = bwlabel(imgn);
-    mx=max(max(L));
-    BW = edge(double(imgn),'sobel');
-    [imx,imy]=size(BW);
-    for n=1:mx
+    imgn=fl;
+
+    [L Ne] = bwlabel(imgn);    
+    for n=1:Ne
         [r,c] = find(L==n);
-        rc = [r c];
-        [sx sy]=size(rc);
-        n1=zeros(imx,imy);
-        for i=1:sx
-            x1=rc(i,1);
-            y1=rc(i,2);
-            n1(x1,y1)=255;
-        end
-        n1=~n1;
-        n1=~clip(n1);
-        img_r=same_dim(n1);
-        letter=read_letter(img_r);
+        
+        n1=imgn(min(r):max(r),min(c):max(c));  
+        
+        img_r=imresize(n1,[42 24]);
+
+        letter=read_letter(img_r,num_letras);
+        
         word=[word letter];
     end
-
-    fprintf(fid,'%12s\n',upper(word));
-    word=[];
-   
-    if isempty(re)  
+    
+    fprintf(fid,'%s\n',word);
+    
+    word=[ ];
+    
+    if isempty(re) 
         break
-    end
-   
+    end    
 end
 fclose(fid);
-winopen('d:\text.txt');
 
+winopen('text.txt')
+fprintf('For more information, visit: <a href= "http://www.matpic.com">www.matpic.com </a> \n')
+clear all
